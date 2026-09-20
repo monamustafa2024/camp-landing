@@ -506,13 +506,18 @@
     border-top:1px solid var(--line);
   }
 
-  /* ---------- Reveal animation (single orchestrated pattern) ---------- */
+  /* ---------- Reveal animation (progressive enhancement only) ---------- */
+  /* Content is visible by default so it never depends on JS running. */
   .reveal{
+    opacity:1;
+    transform:none;
+  }
+  .js-anim .reveal{
     opacity:0;
     transform:translateY(16px);
     transition:opacity .7s ease, transform .7s ease;
   }
-  .reveal.in{
+  .js-anim .reveal.in{
     opacity:1;
     transform:translateY(0);
   }
@@ -784,16 +789,27 @@
   </footer>
 
   <script>
-    const revealEls = document.querySelectorAll('.reveal');
-    const io = new IntersectionObserver((entries)=>{
-      entries.forEach(e=>{
-        if(e.isIntersecting){
-          e.target.classList.add('in');
-          io.unobserve(e.target);
-        }
-      });
-    }, {threshold:0.12, rootMargin:'0px 0px -60px 0px'});
-    revealEls.forEach(el=>io.observe(el));
+    try{
+      if('IntersectionObserver' in window){
+        document.documentElement.classList.add('js-anim');
+        const revealEls = document.querySelectorAll('.reveal');
+        const io = new IntersectionObserver((entries)=>{
+          entries.forEach(e=>{
+            if(e.isIntersecting){
+              e.target.classList.add('in');
+              io.unobserve(e.target);
+            }
+          });
+        }, {threshold:0.12, rootMargin:'0px 0px -60px 0px'});
+        revealEls.forEach(el=>io.observe(el));
+        // safety net: if anything is still hidden after 2s, force it visible
+        setTimeout(()=>{
+          document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));
+        }, 2000);
+      }
+    }catch(err){
+      document.documentElement.classList.remove('js-anim');
+    }
   </script>
 
 </body>
